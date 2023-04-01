@@ -1,0 +1,26 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
+name: CoE to HTTP server
+version: "0.0.1"
+slug: ta_coe
+description: An addon to publish received CoE message via http
+url: "https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+
+ports:
+  9000/tcp: null
+  5441/udp: 5441
+
+ports_description:
+  9000/tcp: "The webserver port"
+  5441/udp: "The CoE-server port"
+
+options:
+  debug: false
+schema:
+  debug: bool

@@ -8,5 +8,21 @@ RUN \
     curl -sSLf -o /usr/bin/tempio \
     "https://github.com/home-assistant/tempio/releases/download/${TEMPIO_VERSION}/tempio_${BUILD_ARCH}"
 
+
+RUN \
+  apk add --no-cache \
+    python3 py3-pip git \
+  \
+  && apk add --no-cache --virtual .build-dependencies \
+    build-base linux-headers gcc python3-dev 
+  
 # Copy root filesystem
 COPY rootfs /
+
+RUN git clone https://gitlab.com/DeerMaximum/ta-coe.git /opt/ta-coe
+
+WORKDIR /opt/ta-coe
+
+RUN pip install -r requirements.txt
+
+RUN apk del --no-cache --purge .build-dependencies

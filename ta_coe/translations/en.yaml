@@ -1,0 +1,4 @@
+configuration:
+  debug:
+    name: Debug
+    description: Enable debug logs
