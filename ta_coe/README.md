@@ -25,7 +25,7 @@ comparison to installing any other Home Assistant add-on.
 3. Check the logs of the "CoE to HTTP server" add-on to see if everything went well.
 
 [addon-badge]: https://my.home-assistant.io/badges/supervisor_addon.svg
-[addon]: https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_logviewer&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository
+[addon]: https://my.home-assistant.io/redirect/supervisor_addon/?addon=a824d5a9_ta_coe&repository_url=https%3A%2F%2Fgithub.com%2FDeerMaximum%2Fha-addons
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
