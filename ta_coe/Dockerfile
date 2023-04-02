@@ -26,3 +26,5 @@ WORKDIR /opt/ta-coe
 RUN pip install -r requirements.txt
 
 RUN apk del --no-cache --purge .build-dependencies
+
+RUN chmod a+x /etc/services.d/ta_coe/run
