@@ -24,3 +24,5 @@ options:
   debug: false
 schema:
   debug: bool
+
+image: "ghcr.io/DeerMaximum/{arch}-ta-coe"
