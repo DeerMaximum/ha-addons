@@ -25,4 +25,4 @@ options:
 schema:
   debug: bool
 
-image: "ghcr.io/DeerMaximum/{arch}-ta-coe"
+image: "ghcr.io/deermaximum/{arch}-ta-coe"
