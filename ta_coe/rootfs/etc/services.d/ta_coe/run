@@ -9,4 +9,5 @@ if [[ $(bashio::config "debug") == "true" ]]; then
     bashio::log.info "Debug mode enabled"
 fi
 
+
 python3 /opt/ta-coe/main.py
