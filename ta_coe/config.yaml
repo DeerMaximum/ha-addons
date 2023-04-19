@@ -4,6 +4,7 @@ version: "0.0.1"
 slug: ta_coe
 description: An addon to publish received CoE message via http
 url: "https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe"
+codenotary: git983456@parabelmail.de
 arch:
   - armhf
   - armv7
