@@ -2,8 +2,6 @@
 
 An addon to publish received CoE message via http
 
-> **Note**
-> This addon is still under development
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
