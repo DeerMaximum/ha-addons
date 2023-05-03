@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: CoE to HTTP server
-version: "0.0.1"
+version: "0.1.0"
 slug: ta_coe
 description: An addon to publish received CoE message via http
 url: "https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe"
