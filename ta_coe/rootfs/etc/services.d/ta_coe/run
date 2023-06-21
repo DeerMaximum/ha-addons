@@ -4,10 +4,11 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
+debug=""
+
 if [[ $(bashio::config "debug") == "true" ]]; then
-    export DEBUG=1
+    debug="--debug"
     bashio::log.info "Debug mode enabled"
 fi
 
-
-python3 /opt/ta-coe/main.py
+python3 /opt/ta-coe/main.py $debug --coe-ip $(bashio::config "coe_ip") --coe-node $(bashio::config "coe_node")

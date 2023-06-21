@@ -1,8 +1,8 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: CoE to HTTP server
-version: "0.1.1"
+version: "1.0.0"
 slug: ta_coe
-description: An addon to publish received CoE message via http
+description: An addon to allows interaction with a C.M.I. as a CoE device, using a HTTP API
 url: "https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe"
 codenotary: git983456@parabelmail.de
 arch:
@@ -23,7 +23,11 @@ ports_description:
 
 options:
   debug: false
+  coe_node: null
+  coe_ip: null
 schema:
   debug: bool
+  coe_node: "int(1,60)"
+  coe_ip: str
 
 image: "ghcr.io/deermaximum/{arch}-ta-coe"
