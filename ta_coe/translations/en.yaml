@@ -2,3 +2,9 @@ configuration:
   debug:
     name: Debug
     description: Enable debug logs
+  coe_node:
+    name: CoE Node
+    description: The CAN node by which the server is displayed
+  coe_ip:
+    name: CoE IP
+    description: The IP of the C.M.I. to which the CAN messages are to be sent
