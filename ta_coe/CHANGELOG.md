@@ -2,15 +2,14 @@
 
 ## 1.0.0
 
-
 ### Breaking
 
 - New API paths for receiving data
 
 ### Other
+
 - Adding the option to send values to the CMI
 - Switch configuration to CLI arguments
-
 
 ## 0.1.1
 
