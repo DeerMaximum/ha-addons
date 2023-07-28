@@ -2,6 +2,11 @@
 
 ## 1.1.0
 
+### Note
+At least the version 1.1.0 for the Technische-Alternative-CoE integration is required for the upgrade.
+
+### Changes
+
 - Add version endpoint
 
 ## 1.0.0
