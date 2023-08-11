@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.1.3
+
+- Fix page mapping
+
 ## 1.1.2
 
 - Fix page limit
