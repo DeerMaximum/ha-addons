@@ -1,5 +1,17 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.0.1
+
+- Fixed missing scaling factor for unit 58
+
+## 2.0.0
+
+### Breaking
+- GET call to retrieve CAN data now requires a path parameter
+
+### Other
+- Add support for receiving multiple CAN-IDs
+
 ## 1.1.4
 
 - Add missing unit 24
