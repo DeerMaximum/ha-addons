@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.0.1
+
+- Fixed missing scaling factor for unit 58
+
 ## 2.0.0
 
 ### Breaking

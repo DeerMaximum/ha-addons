@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: CoE to HTTP server
-version: "2.0.0"
+version: "2.0.1"
 slug: ta_coe
 description: An addon to allows interaction with a C.M.I. as a CoE device, using a HTTP API
 url: "https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe"
