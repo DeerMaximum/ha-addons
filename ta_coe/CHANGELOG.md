@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.0.4
+
+- Fixed missing scaling factor for unit 52
+
 ## 2.0.3
 
 - Revert scaling factor for unit 2
