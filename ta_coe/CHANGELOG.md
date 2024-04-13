@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.1.0
+
+- Add support for CoE version 2
+
 ## 2.0.4
 
 - Fixed missing scaling factor for unit 52

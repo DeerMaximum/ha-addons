@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: CoE to HTTP server
-version: "2.0.4"
+version: "2.1.0"
 slug: ta_coe
 description: An addon to allows interaction with a C.M.I. as a CoE device, using a HTTP API
 url: "https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe"
@@ -16,18 +16,22 @@ init: false
 ports:
   9000/tcp: null
   5441/udp: 5441
+  5442/udp: 5442
 
 ports_description:
   9000/tcp: "The webserver port"
-  5441/udp: "The CoE-server port"
+  5441/udp: "The CoE-server v1 port"
+  5442/udp: "The CoE-server v2 port"
 
 options:
   debug: false
+  coe_version: v1
   coe_node: null
   coe_ip: null
 schema:
   debug: bool
-  coe_node: "int(1,60)"
+  coe_version: list(v1|v2)
+  coe_node: int(1,60)
   coe_ip: str
-
+  
 image: "ghcr.io/deermaximum/{arch}-ta-coe"
