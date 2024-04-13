@@ -11,4 +11,4 @@ if [[ $(bashio::config "debug") == "true" ]]; then
     bashio::log.info "Debug mode enabled"
 fi
 
-python3 /opt/ta-coe/main.py $debug --coe-ip $(bashio::config "coe_ip") --coe-node $(bashio::config "coe_node")
+python3 /opt/ta-coe/main.py $debug --coe-ip $(bashio::config "coe_ip") --coe-node $(bashio::config "coe_node") --coe-version $(bashio::config "coe_version")

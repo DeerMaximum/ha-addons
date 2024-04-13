@@ -2,6 +2,9 @@ configuration:
   debug:
     name: Debug
     description: Enable debug logs
+  coe_version:
+    name: CoE Version
+    description: The used version of the CoE protocol
   coe_node:
     name: CoE Node
     description: The CAN node by which the server is displayed
