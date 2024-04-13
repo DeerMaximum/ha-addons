@@ -34,4 +34,4 @@ schema:
   coe_node: int(1,60)
   coe_ip: str
   
-#image: "ghcr.io/deermaximum/{arch}-ta-coe"
+image: "ghcr.io/deermaximum/{arch}-ta-coe"
