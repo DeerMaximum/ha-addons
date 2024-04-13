@@ -10,11 +10,8 @@ RUN \
 
 
 RUN \
-  apk add --no-cache \
-    python3 py3-pip git \
-  \
-  && apk add --no-cache --virtual .build-dependencies \
-    build-base linux-headers gcc python3-dev 
+  apk add --no-cache --virtual .build-dependencies \
+    build-base linux-headers gcc python3-dev git
   
 # Copy root filesystem
 COPY rootfs /
@@ -23,7 +20,7 @@ RUN git clone --depth 1 --branch v2.1.0 https://gitlab.com/DeerMaximum/ta-coe.gi
 
 WORKDIR /opt/ta-coe
 
-RUN pip install -r requirements.txt
+RUN AIOHTTP_NO_EXTENSIONS=1 pip install -r requirements.txt
 
 RUN apk del --no-cache --purge .build-dependencies
 
