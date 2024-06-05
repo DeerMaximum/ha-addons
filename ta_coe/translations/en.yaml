@@ -11,3 +11,7 @@ configuration:
   coe_ip:
     name: CoE IP
     description: The IP of the C.M.I. to which the CAN messages are to be sent
+network:
+  9000/tcp: The webserver port
+  5441/udp: The CoE-server v1 port
+  5442/udp: The CoE-server v2 port
