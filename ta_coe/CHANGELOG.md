@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.1.1
+
+- Fix to big CoE messages
+
 ## 2.1.0
 
 - Add support for CoE version 2
