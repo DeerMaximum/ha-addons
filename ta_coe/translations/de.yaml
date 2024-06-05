@@ -1,0 +1,17 @@
+configuration:
+  debug:
+    name: Debug
+    description: Debug-Protokolle einschalten
+  coe_version:
+    name: CoE Version
+    description: Die benutzte Version des CoE-Protokolls
+  coe_node:
+    name: CoE Knoten
+    description: Der CAN-Knoten, über den der Server bei der C.M.I. angezeigt wird
+  coe_ip:
+    name: CoE IP
+    description: Die IP des C.M.I., an das die CAN-Nachrichten gesendet werden sollen
+network:
+  9000/tcp: Der Port des Webservers
+  5441/udp: Der Port des CoE-Servers V1
+  5442/udp: Der Port des CoE-Servers V2
