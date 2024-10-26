@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.1.2
+
+- Allow negative values in V2 messages
+- Update dependencies
+
 ## 2.1.1
 
 - Fix to big CoE messages

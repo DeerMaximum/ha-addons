@@ -11,16 +11,17 @@ RUN \
 
 RUN \
   apk add --no-cache --virtual .build-dependencies \
-    build-base linux-headers gcc python3-dev git
+    build-base linux-headers gcc python3-dev git cargo
   
 # Copy root filesystem
 COPY rootfs /
 
-RUN git clone --depth 1 --branch v2.1.1 https://gitlab.com/DeerMaximum/ta-coe.git /opt/ta-coe
+RUN git clone --depth 1 --branch v2.1.2 https://gitlab.com/DeerMaximum/ta-coe.git /opt/ta-coe
 
 WORKDIR /opt/ta-coe
 
-RUN AIOHTTP_NO_EXTENSIONS=1 pip install -r requirements.txt
+RUN sed -i '/pydantic~=2.4.0/c\pydantic~=2.9.2' requirements.txt
+RUN AIOHTTP_NO_EXTENSIONS=1 pip install -r requirements.txt 
 
 RUN apk del --no-cache --purge .build-dependencies
 
