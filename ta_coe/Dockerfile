@@ -11,7 +11,7 @@ RUN \
 
 RUN \
   apk add --no-cache --virtual .build-dependencies \
-    build-base linux-headers gcc python3-dev git
+    build-base linux-headers gcc python3-dev git cargo
   
 # Copy root filesystem
 COPY rootfs /
