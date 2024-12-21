@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.1.3
+
+- Fix wrong data validation on v2 endpoints
+
 ## 2.1.2
 
 - Allow negative values in V2 messages
