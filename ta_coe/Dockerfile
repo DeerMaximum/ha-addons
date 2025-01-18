@@ -16,7 +16,7 @@ RUN \
 # Copy root filesystem
 COPY rootfs /
 
-RUN git clone --depth 1 --branch v2.1.3 https://gitlab.com/DeerMaximum/ta-coe.git /opt/ta-coe
+RUN git clone --depth 1 --branch v2.1.4 https://gitlab.com/DeerMaximum/ta-coe.git /opt/ta-coe
 
 WORKDIR /opt/ta-coe
 
