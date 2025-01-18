@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.1.4
+
+- Fix Overflow Error
+- Add logging of HTTP requests in debug mode
+
 ## 2.1.3
 
 - Fix wrong data validation on v2 endpoints
