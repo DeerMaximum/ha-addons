@@ -4,13 +4,9 @@ version: "2.1.4"
 slug: ta_coe
 description: An addon to allows interaction with a C.M.I. as a CoE device, using a HTTP API
 url: "https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe"
-codenotary: git983456@parabelmail.de
 arch:
-  - armhf
-  - armv7
   - aarch64
   - amd64
-  - i386
 init: false
 
 ports:
