@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.1.5
+
+- Update dependencies
+- Fix voltage scale factor for CoE v2
+- Use uv
+
 ## 2.1.4
 
 - Fix Overflow Error
