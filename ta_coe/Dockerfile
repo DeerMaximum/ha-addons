@@ -20,7 +20,8 @@ RUN git clone --depth 1 --branch v2.1.5 https://gitlab.com/DeerMaximum/ta-coe.gi
 
 WORKDIR /opt/ta-coe
 
-RUN AIOHTTP_NO_EXTENSIONS=1 pip install -r requirements.txt 
+RUN pip install pip-tools && python -m piptools compile -o requirements.txt pyproject.toml && pip uninstall pip-tools
+RUN AIOHTTP_NO_EXTENSIONS=1 pip install -r requirements.txt
 
 RUN apk del --no-cache --purge .build-dependencies
 
