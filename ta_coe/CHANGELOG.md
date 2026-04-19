@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.1.6
+
+- Fix running the finish script
+
 ## 2.1.5
 
 - Update dependencies

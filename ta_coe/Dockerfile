@@ -12,7 +12,7 @@ RUN \
 RUN \
   apk add --no-cache --virtual .build-dependencies \
     build-base linux-headers gcc python3-dev git cargo
-  
+
 # Copy root filesystem
 COPY rootfs /
 
@@ -27,3 +27,4 @@ RUN AIOHTTP_NO_EXTENSIONS=1 pip install -r requirements.txt
 RUN apk del --no-cache --purge .build-dependencies
 
 RUN chmod a+x /etc/services.d/ta_coe/run
+RUN chmod a+x /etc/services.d/ta_coe/finish
