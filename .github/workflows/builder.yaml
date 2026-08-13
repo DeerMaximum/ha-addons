@@ -1,8 +1,8 @@
 name: Builder
 
 env:
-  BUILD_ARGS: "--test"
   MONITORED_FILES: "build.yaml config.yaml Dockerfile rootfs"
+  ARCHITECTURES: '["amd64", "aarch64"]'
 
 on:
   push:
@@ -18,7 +18,7 @@ permissions:
 jobs:
   init:
     runs-on: ubuntu-latest
-    name: Initialize builds
+    name: Check for changed addons
     outputs:
       changed_addons: ${{ steps.changed_addons.outputs.addons }}
       changed: ${{ steps.changed_addons.outputs.changed }}
@@ -59,59 +59,119 @@ jobs:
           else
             echo "No add-on had any monitored files changed (${{ env.MONITORED_FILES }})";
           fi
-  build:
+
+  init-build:
     needs: init
     runs-on: ubuntu-latest
     if: needs.init.outputs.changed == 'true'
-    name: Build ${{ matrix.arch }} ${{ matrix.addon }} add-on
-    permissions:
-      contents: read
-      packages: write
+    name: Init builds
+    outputs:
+      matrix: ${{ steps.update-matrix.outputs.updated_matrix }}
+      push: ${{ steps.should_push.outputs.push }}
     strategy:
       matrix:
         addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
-        arch: ["aarch64", "amd64"]
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v7.0.1
 
-      - name: Get information
+      - name: Decide to push
+        id: should_push
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "Push the image"
+            echo "push=true" >> $GITHUB_OUTPUT
+          else
+            echo "Do not push the image"
+            echo "push=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get information for ${{ matrix.addon }}
         id: info
         uses: home-assistant/actions/helpers/info@master
         with:
           path: "./${{ matrix.addon }}"
 
-      - name: Check if add-on should be built
-        id: check
+      - name: Get build matrix
+        id: matrix
+        uses: home-assistant/builder/actions/prepare-multi-arch-matrix@2026.06.0
+        with:
+          architectures: ${{ env.ARCHITECTURES }}
+          image-name: ${{ matrix.addon }}
+
+      - name: Inject addon and version into matrix
+        id: update-matrix
         run: |
-          if [[ "${{ steps.info.outputs.architectures }}" =~ ${{ matrix.arch }} ]]; then
-             echo "build_arch=true" >> $GITHUB_OUTPUT;
-             echo "image=$(echo ${{ steps.info.outputs.image }} | cut -d'/' -f3)" >> $GITHUB_OUTPUT;
-             if [[ -z "${{ github.head_ref }}" ]] && [[ "${{ github.event_name }}" == "push" ]]; then
-                 echo "BUILD_ARGS=" >> $GITHUB_ENV;
-             fi
-           else
-             echo "${{ matrix.arch }} is not a valid arch for ${{ matrix.addon }}, skipping build";
-             echo "build_arch=false" >> $GITHUB_OUTPUT;
-          fi
+          INPUT_JSON='${{ steps.matrix.outputs.matrix }}'
+          ADDON_VAL='${{ matrix.addon }}'
+          VERSION_VAL='${{ steps.info.outputs.version }}'
+          VERSION_VAL=${VERSION_VAL//\"/}
+          
+          UPDATED_JSON=$(echo "$INPUT_JSON" | jq -c --arg addon "$ADDON_VAL" --arg version "$VERSION_VAL" '.include |= map(. + {addon: $addon, version: $version})')
+          
+          echo "updated_matrix=$UPDATED_JSON" >> $GITHUB_OUTPUT
 
-      - name: Login to GitHub Container Registry
-        if: env.BUILD_ARGS != '--test'
-        uses: docker/login-action@v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build ${{ matrix.addon }} add-on
-        if: steps.check.outputs.build_arch == 'true'
-        uses: home-assistant/builder@2026.02.1
+  build:
+    needs: init-build
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.arch }} ${{ matrix.addon }} add-on
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.init-build.outputs.matrix) }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Build image
+        uses: home-assistant/builder/actions/build-image@2026.06.0
         with:
-          args: |
-            ${{ env.BUILD_ARGS }} \
-            --${{ matrix.arch }} \
-            --target /data/${{ matrix.addon }} \
-            --image "${{ steps.check.outputs.image }}" \
-            --docker-hub "ghcr.io/${{ github.repository_owner }}" \
-            --addon
+          arch: ${{ matrix.arch }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ matrix.image }}
+          image-tags: |
+            ${{ matrix.version }}
+            latest
+          push: ${{ needs.init-build.outputs.push }}
+          version: ${{ matrix.version }}
+
+  manifest:
+    name: Publish multi-arch manifest for ${{ matrix.addon }} add-on
+    needs: [init, init-build, build]
+    runs-on: ubuntu-latest
+    if: needs.init-build.outputs.push == 'true'
+    permissions:
+      id-token: write 
+      packages: write 
+    strategy:
+      matrix:
+        addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
+    steps:
+      - name: Get information for ${{ matrix.addon }}
+        id: info
+        uses: home-assistant/actions/helpers/info@master
+        with:
+          path: "./${{ matrix.addon }}"
+
+      - name: Cleanup version
+        id: version
+        run: |
+          VERSION_VAL='${{ steps.info.outputs.version }}'
+          VERSION_VAL=${VERSION_VAL//\"/}
+
+          echo "version=$VERSION_VAL" >> $GITHUB_OUTPUT
+
+      - name: Publish multi-arch manifest
+        uses: home-assistant/builder/actions/publish-multi-arch-manifest@2026.06.0
+        with:
+          architectures: ${{ env.ARCHITECTURES }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: ${{ matrix.addon }}
+          image-tags: |
+            ${{ steps.version.outputs.version }}
+            latest
