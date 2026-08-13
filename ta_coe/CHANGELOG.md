@@ -1,5 +1,16 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 2.1.7
+
+- Bump `aiohttp` to ~3.14
+- Bump `aiohttp_pydantic` to ~3.0
+- Bump `async-timeout` to ~5.0
+- Bump `bitstring` to ~4.4
+- Bump `pydantic` to ~2.13
+- Bump `pytest-cov` to ~7.1
+- Bump `pytest` to ~9.1
+- Bump `ruff` to ~0.16
+
 ## 2.1.6
 
 - Fix running the finish script
