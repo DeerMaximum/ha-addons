@@ -92,12 +92,26 @@ jobs:
         with:
           path: "./${{ matrix.addon }}"
 
+      - name: Format build matrix parameters
+        id: parameters
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          LOWER_OWNER="${OWNER,,}"
+
+          echo "registry-prefix=ghcr.io/$LOWER_OWNER" >> $GITHUB_OUTPUT
+
+          ADDON="${{ matrix.addon }}"
+          HYPHENATED_ADDON="${ADDON//_/-}"
+
+          echo "image-name=$HYPHENATED_ADDON" >> $GITHUB_OUTPUT
+
       - name: Get build matrix
         id: matrix
         uses: home-assistant/builder/actions/prepare-multi-arch-matrix@2026.06.0
         with:
           architectures: ${{ env.ARCHITECTURES }}
-          image-name: ${{ matrix.addon }}
+          image-name: ${{ steps.parameters.outputs.image-name }}
+          registry-prefix: ${{ steps.parameters.outputs.registry-prefix }}
 
       - name: Inject addon and version into matrix
         id: update-matrix
