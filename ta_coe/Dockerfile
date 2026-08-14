@@ -1,18 +1,11 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-dockerfile
-FROM ghcr.io/home-assistant/base:latest
+FROM ghcr.io/home-assistant/base-python:3.14-alpine3.24
 
 LABEL \
-    org.opencontainers.image.title: "Home Assistant Add-on: CoE to HTTP server" \
-    org.opencontainers.image.description: "An addon to allows interaction with a C.M.I. as a CoE device, using a HTTP API." \
-    org.opencontainers.image.source: "https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe" \
-    org.opencontainers.image.licenses: "MIT License"
-
-# Execute during the build of the image
-ARG TEMPIO_VERSION="2021.09.0"
-RUN \
-    curl -sSLf -o /usr/bin/tempio \
-    "https://github.com/home-assistant/tempio/releases/download/${TEMPIO_VERSION}/tempio_${BUILD_ARCH}"
-
+    org.opencontainers.image.title="Home Assistant Add-on: CoE to HTTP server" \
+    org.opencontainers.image.description="An addon to allows interaction with a C.M.I. as a CoE device, using a HTTP API." \
+    org.opencontainers.image.source="https://github.com/DeerMaximum/ha-addons/tree/main/ta_coe" \
+    org.opencontainers.image.licenses="MIT License"
 
 RUN \
   apk add --no-cache --virtual .build-dependencies \
