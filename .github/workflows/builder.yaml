@@ -11,9 +11,14 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: builder-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   init:
@@ -22,13 +27,31 @@ jobs:
     outputs:
       changed_addons: ${{ steps.changed_addons.outputs.addons }}
       changed: ${{ steps.changed_addons.outputs.changed }}
+      push: ${{ steps.push.outputs.push }}
+      registry_prefix: ${{ steps.parameters.outputs.registry-prefix }}
+      image_names: ${{ steps.parameters.outputs.image-names }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Get changed files
         id: changed_files
-        uses: Ana06/get-changed-files@v2.3.0
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+            merge_base=$(git merge-base "${PR_BASE_SHA}" HEAD)
+            git diff --name-only "${merge_base}" HEAD > /tmp/changed-files.txt
+          elif [[ -n "${PUSH_BEFORE}" ]] && [[ "${PUSH_BEFORE}" != "0000000000000000000000000000000000000000" ]]; then
+            git diff --name-only "${PUSH_BEFORE}" HEAD > /tmp/changed-files.txt
+          else
+            root=$(git rev-list --max-parents=0 HEAD)
+            git diff --name-only "${root}" HEAD > /tmp/changed-files.txt
+          fi
 
       - name: Find add-on directories
         id: addons
@@ -36,49 +59,43 @@ jobs:
 
       - name: Get changed add-ons
         id: changed_addons
+        env:
+          ADDONS: ${{ steps.addons.outputs.addons }}
+          MONITORED_FILES: ${{ env.MONITORED_FILES }}
         run: |
           declare -a changed_addons
-          for addon in ${{ steps.addons.outputs.addons }}; do
-            if [[ "${{ steps.changed_files.outputs.all }}" =~ $addon ]]; then
-              for file in ${{ env.MONITORED_FILES }}; do
-                  if [[ "${{ steps.changed_files.outputs.all }}" =~ $addon/$file ]]; then
-                    if [[ ! "${changed_addons[@]}" =~ $addon ]]; then
-                      changed_addons+=("\"${addon}\",");
+          while IFS= read -r addon; do
+            [[ -z "${addon}" ]] && continue
+            for file in ${MONITORED_FILES}; do
+              while IFS= read -r changed_file; do
+                case "${changed_file}" in
+                  "${addon}/${file}" | "${addon}/${file}/"*)
+                    if [[ ! " ${changed_addons[*]} " == *" ${addon} "* ]]; then
+                      changed_addons+=("${addon}")
                     fi
-                  fi
-              done
-            fi
-          done
+                    break
+                    ;;
+                esac
+              done < /tmp/changed-files.txt
+            done
+          done < <(printf '%s\n' ${ADDONS})
 
-          changed=$(echo ${changed_addons[@]} | rev | cut -c 2- | rev)
-
-          if [[ -n ${changed} ]]; then
-            echo "Changed add-ons: $changed";
-            echo "changed=true" >> $GITHUB_OUTPUT;
-            echo "addons=[$changed]" >> $GITHUB_OUTPUT;
+          if [[ ${#changed_addons[@]} -gt 0 ]]; then
+            addons_json=$(printf '%s\n' "${changed_addons[@]}" | jq -R . | jq -s -c .)
+            echo "Changed add-ons: ${addons_json}"
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "addons=${addons_json}" >> $GITHUB_OUTPUT
           else
-            echo "No add-on had any monitored files changed (${{ env.MONITORED_FILES }})";
+            echo "No add-on had any monitored files changed (${MONITORED_FILES})"
           fi
 
-  init-build:
-    needs: init
-    runs-on: ubuntu-latest
-    if: needs.init.outputs.changed == 'true'
-    name: Init builds
-    outputs:
-      matrix: ${{ steps.update-matrix.outputs.updated_matrix }}
-      push: ${{ steps.should_push.outputs.push }}
-    strategy:
-      matrix:
-        addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7.0.1
-
       - name: Decide to push
-        id: should_push
+        id: push
+        if: steps.changed_addons.outputs.changed == 'true'
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          if [[ "${REF_NAME}" == "main" ]]; then
             echo "Push the image"
             echo "push=true" >> $GITHUB_OUTPUT
           else
@@ -86,57 +103,119 @@ jobs:
             echo "push=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Format build parameters
+        id: parameters
+        if: steps.changed_addons.outputs.changed == 'true'
+        env:
+          OWNER: ${{ github.repository_owner }}
+          ADDONS: ${{ steps.changed_addons.outputs.addons }}
+        run: |
+          LOWER_OWNER="${OWNER,,}"
+          echo "registry-prefix=ghcr.io/${LOWER_OWNER}" >> $GITHUB_OUTPUT
+
+          image_names='{}'
+          while IFS= read -r addon; do
+            [[ -z "${addon}" ]] && continue
+            HYPHENATED_ADDON="${addon//_/-}"
+            image_names=$(jq -c --arg addon "${addon}" --arg name "${HYPHENATED_ADDON}" '. + {($addon): $name}' <<< "${image_names}")
+          done < <(jq -r '.[]' <<< "${ADDONS}")
+          echo "image-names=${image_names}" >> $GITHUB_OUTPUT
+
+  init-build:
+    name: Init builds
+    needs: init
+    if: needs.init.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      matrix:
+        addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
       - name: Get information for ${{ matrix.addon }}
         id: info
         uses: home-assistant/actions/helpers/info@master
         with:
           path: "./${{ matrix.addon }}"
 
-      - name: Format build matrix parameters
-        id: parameters
+      - name: Cleanup version
+        id: version
+        env:
+          VERSION: ${{ steps.info.outputs.version }}
         run: |
-          OWNER="${{ github.repository_owner }}"
-          LOWER_OWNER="${OWNER,,}"
-
-          echo "registry-prefix=ghcr.io/$LOWER_OWNER" >> $GITHUB_OUTPUT
-
-          ADDON="${{ matrix.addon }}"
-          HYPHENATED_ADDON="${ADDON//_/-}"
-
-          echo "image-name=$HYPHENATED_ADDON" >> $GITHUB_OUTPUT
+          VERSION_VAL="${VERSION//\"/}"
+          echo "version=${VERSION_VAL}" >> $GITHUB_OUTPUT
 
       - name: Get build matrix
         id: matrix
         uses: home-assistant/builder/actions/prepare-multi-arch-matrix@2026.06.0
         with:
           architectures: ${{ env.ARCHITECTURES }}
-          image-name: ${{ steps.parameters.outputs.image-name }}
-          registry-prefix: ${{ steps.parameters.outputs.registry-prefix }}
+          image-name: ${{ fromJson(needs.init.outputs.image_names)[matrix.addon] }}
+          registry-prefix: ${{ needs.init.outputs.registry_prefix }}
 
       - name: Inject addon and version into matrix
         id: update-matrix
+        env:
+          INPUT_JSON: ${{ steps.matrix.outputs.matrix }}
+          ADDON_VAL: ${{ matrix.addon }}
+          VERSION_VAL: ${{ steps.version.outputs.version }}
         run: |
-          INPUT_JSON='${{ steps.matrix.outputs.matrix }}'
-          ADDON_VAL='${{ matrix.addon }}'
-          VERSION_VAL='${{ steps.info.outputs.version }}'
-          VERSION_VAL=${VERSION_VAL//\"/}
-          
-          UPDATED_JSON=$(echo "$INPUT_JSON" | jq -c --arg addon "$ADDON_VAL" --arg version "$VERSION_VAL" '.include |= map(. + {addon: $addon, version: $version})')
-          
-          echo "updated_matrix=$UPDATED_JSON" >> $GITHUB_OUTPUT
+          UPDATED_JSON=$(echo "${INPUT_JSON}" | jq -c --arg addon "${ADDON_VAL}" --arg version "${VERSION_VAL}" '.include |= map(. + {addon: $addon, version: $version})')
+          mkdir -p /tmp/matrices
+          printf '%s\n' "${UPDATED_JSON}" > "/tmp/matrices/${ADDON_VAL}.json"
 
+      - name: Upload matrix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-matrix-${{ matrix.addon }}
+          path: /tmp/matrices/${{ matrix.addon }}.json
+          if-no-files-found: error
+          retention-days: 1
+
+  combine:
+    name: Combine build matrices
+    needs: init-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      matrix: ${{ steps.combine.outputs.matrix }}
+    steps:
+      - name: Download matrices
+        uses: actions/download-artifact@v4
+        with:
+          pattern: build-matrix-*
+          path: /tmp/matrices
+          merge-multiple: true
+
+      - name: Combine matrices
+        id: combine
+        run: |
+          combined='{"include":[]}'
+          for file in /tmp/matrices/*.json; do
+            [[ -e "${file}" ]] || continue
+            combined=$(jq -c --argjson new "$(cat "${file}")" '.include += $new.include' <<< "${combined}")
+          done
+          echo "matrix=${combined}" >> $GITHUB_OUTPUT
 
   build:
-    needs: init-build
-    runs-on: ${{ matrix.os }}
     name: Build ${{ matrix.arch }} ${{ matrix.addon }} add-on
+    needs: [init, combine]
+    if: needs.init.outputs.changed == 'true'
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
       id-token: write
       packages: write
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.init-build.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.combine.outputs.matrix) }}
 
     steps:
       - name: Check out repository
@@ -146,23 +225,24 @@ jobs:
         uses: home-assistant/builder/actions/build-image@2026.06.0
         with:
           arch: ${{ matrix.arch }}
+          cache-gha-scope: ${{ matrix.addon }}
           context: ${{ matrix.addon }}
           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
           image: ${{ matrix.image }}
           image-tags: |
             ${{ matrix.version }}
             latest
-          push: ${{ needs.init-build.outputs.push }}
+          push: ${{ needs.init.outputs.push }}
           version: ${{ matrix.version }}
 
   manifest:
     name: Publish multi-arch manifest for ${{ matrix.addon }} add-on
-    needs: [init, init-build, build]
+    needs: [init, build]
     runs-on: ubuntu-latest
-    if: needs.init-build.outputs.push == 'true'
+    if: needs.init.outputs.push == 'true'
     permissions:
-      id-token: write 
-      packages: write 
+      id-token: write
+      packages: write
     strategy:
       matrix:
         addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
@@ -175,18 +255,19 @@ jobs:
 
       - name: Cleanup version
         id: version
+        env:
+          VERSION: ${{ steps.info.outputs.version }}
         run: |
-          VERSION_VAL='${{ steps.info.outputs.version }}'
-          VERSION_VAL=${VERSION_VAL//\"/}
-
-          echo "version=$VERSION_VAL" >> $GITHUB_OUTPUT
+          VERSION_VAL="${VERSION//\"/}"
+          echo "version=${VERSION_VAL}" >> $GITHUB_OUTPUT
 
       - name: Publish multi-arch manifest
         uses: home-assistant/builder/actions/publish-multi-arch-manifest@2026.06.0
         with:
           architectures: ${{ env.ARCHITECTURES }}
           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
-          image-name: ${{ matrix.addon }}
+          image-name: ${{ fromJson(needs.init.outputs.image_names)[matrix.addon] }}
+          registry-prefix: ${{ needs.init.outputs.registry_prefix }}
           image-tags: |
             ${{ steps.version.outputs.version }}
             latest
