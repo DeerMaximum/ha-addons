@@ -31,5 +31,3 @@ schema:
   coe_ip: str
 
 image: "ghcr.io/deermaximum/ta-coe"
-
-
