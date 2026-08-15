@@ -148,6 +148,7 @@ jobs:
           VERSION: ${{ steps.info.outputs.version }}
         run: |
           VERSION_VAL="${VERSION//\"/}"
+          echo "Detected version: ${VERSION_VAL}"
           echo "version=${VERSION_VAL}" >> $GITHUB_OUTPUT
 
       - name: Get build matrix
@@ -247,6 +248,9 @@ jobs:
       matrix:
         addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
       - name: Get information for ${{ matrix.addon }}
         id: info
         uses: home-assistant/actions/helpers/info@master
@@ -259,6 +263,7 @@ jobs:
           VERSION: ${{ steps.info.outputs.version }}
         run: |
           VERSION_VAL="${VERSION//\"/}"
+          echo "Detected version: ${VERSION_VAL}"
           echo "version=${VERSION_VAL}" >> $GITHUB_OUTPUT
 
       - name: Publish multi-arch manifest
