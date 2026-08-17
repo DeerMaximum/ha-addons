@@ -189,7 +189,7 @@ jobs:
       matrix: ${{ steps.combine.outputs.matrix }}
     steps:
       - name: Download matrices
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: build-matrix-*
           path: /tmp/matrices
