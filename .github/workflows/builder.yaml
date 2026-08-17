@@ -171,7 +171,7 @@ jobs:
           printf '%s\n' "${UPDATED_JSON}" > "/tmp/matrices/${ADDON_VAL}.json"
 
       - name: Upload matrix artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-matrix-${{ matrix.addon }}
           path: /tmp/matrices/${{ matrix.addon }}.json
